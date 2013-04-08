@@ -12,12 +12,15 @@ SCRNX	EQU 0x0ff4 ;分辨率的X
 SCRNY	EQU 0x0ff6 ;分辨率的Y
 VRAM	EQU 0x0ff8 ;图像缓冲区的开始地址
 
-GLOBAL start
-EXTERN main
+; ----------------------------------------------------
+; disk
+; 0      0x200       0x4200
+; |ipl.bin|            |asmhead.sys            |
+;0x7c00  0x7e00      0xc200 
+; ----------------------------------------------------
 [SECTION .head]
-[BITS 16]
 start:
-	;ORG 0c200h
+	ORG 0c200h
 	MOV AL, 0x13 ; VGA显卡
 	MOV AH, 0x00
 	INT 0x10
@@ -54,9 +57,6 @@ CPU 486
 	MOV	CR0, EAX
 	JMP pipelineflush
 pipelineflush:
-	CALL main
-	HLT
-	JMP fin
 	MOV AX, 1*8
 	MOV	DS, AX
 	MOV	ES, AX
@@ -64,7 +64,7 @@ pipelineflush:
 	MOV	GS, AX
 	MOV SS, AX
 
-	MOV ESI, bootpack
+	MOV ESI, 0xcc00
 	MOV	EDI, BOTPAK
 	MOV ECX, 512*1024/4
 	CALL memcpy
@@ -92,8 +92,9 @@ pipelineflush:
 	MOV	EDI, [EBX+12]
 	CALL memcpy
 skip:
-	MOV	ESP, [EBX+12]
-	JMP DWORD 2*8:0x00000000
+	MOV ESP, [EBX+12]
+	MOV EBP, [EBX+12]
+	JMP DWORD 2*8:0x0000001b
 
 waitkbdout:
 	IN	AL, 0x64
@@ -122,9 +123,4 @@ GDTR0:
 	DD	GDT0
 
 ALIGNB	16
-bootpack:
-	CALL main
-fin:
-	HLT
-	JMP fin 
 
