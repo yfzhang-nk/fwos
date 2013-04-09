@@ -1,6 +1,6 @@
-ENTRY(start)
+ENTRY(main)
 SECTIONS {
-         . = 0x0000c800;
+         . = 0x0000cc00;
 		 .head : {
 		 	* (.head); 
 		 }

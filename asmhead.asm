@@ -82,19 +82,18 @@ pipelineflush:
 	SUB	ECX, 512/4
 	CALL memcpy
 
-	MOV	EBX, BOTPAK
-	MOV	ECX, [EBX+16]
-	ADD	ECX, 3
-	SHR	ECX, 2
-	JZ	skip
-	MOV	ESI, [EBX+20]
-	ADD	ESI, EBX
-	MOV	EDI, [EBX+12]
-	CALL memcpy
+;	MOV	EBX, BOTPAK
+;	MOV	ECX, [EBX+16]
+;	ADD	ECX, 3
+;	SHR	ECX, 2
+;	JZ	skip
+;	MOV	ESI, [EBX+20]
+;	ADD	ESI, EBX
+;	MOV	EDI, [EBX+12]
+;	CALL memcpy
 skip:
-	MOV ESP, [EBX+12]
-	MOV EBP, [EBX+12]
-	JMP DWORD 2*8:0x0000001b
+	MOV ESP, 0x00310000 
+	JMP DWORD 2*8:0x00000000
 
 waitkbdout:
 	IN	AL, 0x64
