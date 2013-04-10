@@ -13,7 +13,7 @@ default:
 ipl.bin: ipl.asm 
 	$(NASM) ipl.asm -o ipl.bin	
 
-bootpack.o: bootpack.c
+bootpack.o: bootpack.c hankaku.h
 	$(GCC) -m32 -c -o bootpack.o bootpack.c
 
 nasmfunc.o: nasmfunc.asm
