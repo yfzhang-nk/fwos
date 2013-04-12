@@ -20,7 +20,7 @@ nasmfunc.o: nasmfunc.asm
 	$(NASM) -felf -o nasmfunc.o nasmfunc.asm
 	
 bootpack.elf: bootpack.o nasmfunc.o
-	$(LD) -T bootpack.lds -melf_i386 -o bootpack.elf bootpack.o nasmfunc.o
+	$(LD) -T bootpack.lds -melf_i386 -o bootpack.elf bootpack.o nasmfunc.o 
 
 bootpack.sys: bootpack.elf
 	$(OBJCOPY) -Obinary bootpack.elf bootpack.sys
