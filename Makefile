@@ -7,20 +7,28 @@ DD = dd
 DEL = rm
 OBJCOPY = objcopy
 
+MIDOBJ = graphic.o dsctbl.o int.o
+
 default:
 	$(MAKE) myos 
 
 ipl.bin: ipl.asm 
 	$(NASM) ipl.asm -o ipl.bin	
 
-bootpack.o: bootpack.c hankaku.h
+int.o: int.c bootpack.h
+	$(GCC) -m32 -c -o int.o int.c
+dsctbl.o: dsctbl.c
+	$(GCC) -m32 -c -o dsctbl.o dsctbl.c
+graphic.o: graphic.c hankaku.h color.h
+	$(GCC) -m32 -c -o graphic.o graphic.c
+bootpack.o: bootpack.c color.h bootpack.h
 	$(GCC) -m32 -c -o bootpack.o bootpack.c
 
 nasmfunc.o: nasmfunc.asm
 	$(NASM) -felf -o nasmfunc.o nasmfunc.asm
 	
-bootpack.elf: bootpack.o nasmfunc.o
-	$(LD) -T bootpack.lds -melf_i386 -o bootpack.elf bootpack.o nasmfunc.o 
+bootpack.elf: bootpack.o nasmfunc.o $(MIDOBJ)
+	$(LD) -T bootpack.lds -melf_i386 -o bootpack.elf bootpack.o $(MIDOBJ) nasmfunc.o 
 
 bootpack.sys: bootpack.elf
 	$(OBJCOPY) -Obinary bootpack.elf bootpack.sys
@@ -35,4 +43,4 @@ myos: ipl.bin asmhead.sys bootpack.sys
 	$(DD) if=/dev/zero of=../myos.img bs=512 seek=2880 count=0
 
 clean:
-	$(DEL) ipl.bin asmhead.sys bootpack.o bootpack.elf bootpack.sys nasmfunc.o
+	$(DEL) ipl.bin asmhead.sys bootpack.o bootpack.elf bootpack.sys nasmfunc.o $(MIDOBJ)
