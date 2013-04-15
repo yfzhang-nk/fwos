@@ -65,7 +65,7 @@ pipelineflush:
 	MOV SS, AX
 
 	MOV ESI, 0xcc00
-	MOV	EDI, BOTPAK
+	MOV	EDI, BOTPAK+0xcc00
 	MOV ECX, 512*1024/4
 	CALL memcpy
 
@@ -93,7 +93,7 @@ pipelineflush:
 ;	CALL memcpy
 skip:
 	MOV ESP, 0x00310000 
-	JMP DWORD 2*8:0x00000000
+	JMP DWORD 2*8:0xcc00
 
 waitkbdout:
 	IN	AL, 0x64

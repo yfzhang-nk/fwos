@@ -7,7 +7,7 @@ DD = dd
 DEL = rm
 OBJCOPY = objcopy
 
-MIDOBJ = graphic.o dsctbl.o int.o
+MIDOBJ = graphic.o dsctbl.o int.o libc_required.o
 
 default:
 	$(MAKE) myos 
@@ -15,6 +15,8 @@ default:
 ipl.bin: ipl.asm 
 	$(NASM) ipl.asm -o ipl.bin	
 
+libc_required.o: libc_required.c 
+	$(GCC) -m32 -c -o libc_required.o libc_required.c
 int.o: int.c bootpack.h
 	$(GCC) -m32 -c -o int.o int.c
 dsctbl.o: dsctbl.c
@@ -27,8 +29,8 @@ bootpack.o: bootpack.c color.h bootpack.h
 nasmfunc.o: nasmfunc.asm
 	$(NASM) -felf -o nasmfunc.o nasmfunc.asm
 	
-bootpack.elf: bootpack.o nasmfunc.o $(MIDOBJ)
-	$(LD) -T bootpack.lds -melf_i386 -o bootpack.elf bootpack.o $(MIDOBJ) nasmfunc.o 
+bootpack.elf: bootpack.o nasmfunc.o $(MIDOBJ) libc.a
+	$(LD) -T bootpack.lds -melf_i386 -o bootpack.elf bootpack.o $(MIDOBJ) nasmfunc.o libc.a
 
 bootpack.sys: bootpack.elf
 	$(OBJCOPY) -Obinary bootpack.elf bootpack.sys

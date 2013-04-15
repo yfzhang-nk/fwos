@@ -16,6 +16,7 @@
 
 /* asm function */
 void io_out8(int port, int data);
+int io_in8(int port);
 void io_sti(void);
 /* c function */
 void init_palette(void);
@@ -33,3 +34,8 @@ struct BOOTINFO {
 	char *vram;
 };
 
+struct KEYBUF 
+{
+	unsigned char data, flag;
+} ;
+struct KEYBUF keybuf;
