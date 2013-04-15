@@ -7,7 +7,7 @@ DD = dd
 DEL = rm
 OBJCOPY = objcopy
 
-MIDOBJ = graphic.o dsctbl.o int.o libc_required.o
+MIDOBJ = graphic.o dsctbl.o int.o libc_required.o fifo.o
 
 default:
 	$(MAKE) myos 
@@ -15,17 +15,19 @@ default:
 ipl.bin: ipl.asm 
 	$(NASM) ipl.asm -o ipl.bin	
 
-libc_required.o: libc_required.c 
-	$(GCC) -m32 -c -o libc_required.o libc_required.c
-int.o: int.c bootpack.h
-	$(GCC) -m32 -c -o int.o int.c
-dsctbl.o: dsctbl.c
-	$(GCC) -m32 -c -o dsctbl.o dsctbl.c
-graphic.o: graphic.c hankaku.h color.h
-	$(GCC) -m32 -c -o graphic.o graphic.c
-bootpack.o: bootpack.c color.h bootpack.h
-	$(GCC) -m32 -c -o bootpack.o bootpack.c
+#libc_required.o: libc_required.c 
+#	$(GCC) -m32 -c -o libc_required.o libc_required.c
+#int.o: int.c bootpack.h
+#	$(GCC) -m32 -c -o int.o int.c
+#dsctbl.o: dsctbl.c
+#	$(GCC) -m32 -c -o dsctbl.o dsctbl.c
+#graphic.o: graphic.c hankaku.h color.h
+#	$(GCC) -m32 -c -o graphic.o graphic.c
+#bootpack.o: bootpack.c color.h bootpack.h
+#	$(GCC) -m32 -c -o bootpack.o bootpack.c
 
+%.o: %.c
+	$(GCC) -m32 -c -o $@ $<
 nasmfunc.o: nasmfunc.asm
 	$(NASM) -felf -o nasmfunc.o nasmfunc.asm
 	

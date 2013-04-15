@@ -1,5 +1,4 @@
 #include "bootpack.h"
-#define PORT_KEYDAT	0x0060
 
 void init_pic(void)
 {
@@ -23,24 +22,21 @@ void init_pic(void)
 
 void inthandler21(int *esp)
 {
-	struct BOOTINFO *binfo = (struct BOOTINFO *) ADR_BOOTINFO;
 	unsigned char data;
 	io_out8(PIC0_OCW2, 0x61); //通知PIC “IRQ-01 已经受理完毕
 	data = io_in8(PORT_KEYDAT);
-	if (keybuf.flag==0)
-	{
-		keybuf.data = data;
-		keybuf.flag = 1;
-	}
+	fifo8_put(&keyfifo, data);
 	return;
 }
 
 void inthandler2c(int *esp)
 {
-	struct BOOTINFO *binfo = (struct BOOTINFO *) ADR_BOOTINFO;
-	boxfill8(binfo->vram, binfo->scrnx, COL8_000000, 0, 0, 32 * 8 - 1, 15);
-	putfont8_asc(binfo->vram, binfo->scrnx, 0, 0, COL8_FFFFFF, "INT 2C (IRQ-1) : PS/2 mouse");
-	for (;;) { asm("HLT");}
+	unsigned char data;
+	io_out8(PIC1_OCW2, 0x64); //通知PIC1 IRQ-12的受理已经完成
+	io_out8(PIC0_OCW2, 0x62); //通知PIC0 IRQ-02的受理已经完成
+	data = io_in8(PORT_KEYDAT);
+	fifo8_put(&mousefifo, data);
+	return;
 }
 
 void inthandler27(int *esp)
