@@ -33,19 +33,20 @@ start:
 	MOV AH, 0x02
 	INT 0x16 ; keyboard BIOS
 	MOV [LEDS], AL
-
+; PIC 关闭一切中断
+; 根据AT兼容机的规格，如果要初始化PIC，必须在CLI之前进行，否则有时会挂起。随后进行PIC的初始化
 	MOV AL, 0xff
-	OUT	0x21, AL
-	NOP
-	OUT	0xa1, AL
+	OUT	0x21, AL ; 相当于 io_out8(PIC0_IMR, 0xff) 禁止主PIC的全部中断
+	NOP ; 如果连续执行OUT指令，有些机种会无法正常运行
+	OUT	0xa1, AL ; 相当于 io_out8(PIC1_IMR, 0xff) 禁止从PIC的全部中断
 
-	CLI
-	
+	CLI ; 禁止CPU级别的中断
+; 为了让CPU能够访问1M以上的内存空间，设定A20GATE
 	CALL waitkbdout
 	MOV	AL, 0xd1
 	OUT	0x64, AL
 	CALL waitkbdout
-	MOV AL, 0xdf
+	MOV AL, 0xdf ; enable A20
 	OUT	0x60, AL
 	CALL waitkbdout
 
@@ -82,17 +83,8 @@ pipelineflush:
 	SUB	ECX, 512/4
 	CALL memcpy
 
-;	MOV	EBX, BOTPAK
-;	MOV	ECX, [EBX+16]
-;	ADD	ECX, 3
-;	SHR	ECX, 2
-;	JZ	skip
-;	MOV	ESI, [EBX+20]
-;	ADD	ESI, EBX
-;	MOV	EDI, [EBX+12]
-;	CALL memcpy
 skip:
-	MOV ESP, 0x00310000 
+	MOV ESP, 0x00310000 ;栈的起始地址
 	JMP DWORD 2*8:0xcc00
 
 waitkbdout:
