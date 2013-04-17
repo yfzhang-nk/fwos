@@ -1,5 +1,6 @@
 #include "color.h"
 
+// 主从PIC 
 #define PIC0_ICW1       0x0020
 #define PIC0_OCW2       0x0020
 #define PIC0_IMR        0x0021
@@ -13,8 +14,10 @@
 #define PIC1_ICW3       0x00a1
 #define PIC1_ICW4       0x00a1
 
+// BOOTINFO 存放位置
 #define ADR_BOOTINFO    0x00000ff0
 
+// 键盘鼠标
 #define PORT_KEYDAT	0x0060
 #define PORT_KEYSTA 0x0064
 #define PORT_KEYCMD 0x0064
@@ -23,6 +26,12 @@
 #define KBC_MODE 0x47
 #define KEYCMD_SENDTO_MOUSE 0xd4
 #define MOUSECMD_ENABLE 0xf4
+
+// 内存
+#define EFLAGS_AC_BIT 0x0004000
+#define CR0_CACHE_DISABLE 0x60000000
+#define MEMMAN_FREES 4090 // about 32MB, MEMMAN is short for Memory Management
+#define MEMMAN_ADDR 0x003c0000
 
 struct BOOTINFO 
 {
@@ -45,12 +54,30 @@ struct MOUSE_DEC
 	unsigned char buf[3], phase;
 	int x, y, btn;
 };
-
 struct MOUSE_DEC mdec;
+
+//memory management
+struct FREEINFO
+{
+	unsigned int addr, size;
+};
+
+struct MEMMAN
+{
+	int frees, maxfrees, lostsize, losts;
+	struct FREEINFO free[MEMMAN_FREES];
+};
+
 /* asm function */
 void io_out8(int port, int data);
 int io_in8(int port);
+int load_cr0(void);
+void store_cr0(int cr0);
 void io_sti(void);
+void io_cli(void);
+int io_load_eflags(void);
+void io_store_eflags(int eflags);
+
 /* c function */
 void init_palette(void);
 void init_screen(char* vram, int xsize, int ysize);
@@ -67,8 +94,15 @@ int fifo8_get(struct FIFO8 *fifo);
 int fifo8_put(struct FIFO8 *fifo, unsigned char data);
 void fifo8_init(struct FIFO8 *fifo, int size, unsigned char *buf);
 
-/* c function */
+/* c function keyboard&mouse*/
 void wait_KBC_sendready(void);
 void init_keyboard(void);
 void enable_mouse(struct MOUSE_DEC *mdec);
 int mouse_decode(struct MOUSE_DEC *mdec, unsigned char dat);
+
+/* c function memory */
+unsigned int memtest(unsigned int start, unsigned int end);
+/* memory management */
+unsigned int memman_total(struct MEMMAN *man);
+unsigned int memman_alloc_4k(struct MEMMAN *man, unsigned int size);
+int memman_free_4k(struct MEMMAN *man, unsigned int addr, unsigned int size);
