@@ -7,7 +7,7 @@ DD = dd
 DEL = rm
 OBJCOPY = objcopy
 
-MIDOBJ = graphic.o dsctbl.o int.o libc_required.o fifo.o keyboard.o mouse.o memory.o
+MIDOBJ = graphic.o dsctbl.o int.o libc_required.o fifo.o keyboard.o mouse.o memory.o sheet.o
 
 default:
 	$(MAKE) fwos

@@ -33,6 +33,10 @@
 #define MEMMAN_FREES 4090 // about 32MB, MEMMAN is short for Memory Management
 #define MEMMAN_ADDR 0x003c0000
 
+//图层
+#define MAX_SHEETS 256
+#define SHEET_USE 1
+
 struct BOOTINFO 
 {
 	char cyls, leds, vmode, reserve;
@@ -68,6 +72,20 @@ struct MEMMAN
 	struct FREEINFO free[MEMMAN_FREES];
 };
 
+// sheet mangement
+struct SHEET
+{
+	unsigned char *buf;
+	int bxsize, bysize, vx0, vy0, col_inv/*透明色色号*/, height, flags;
+};
+
+struct SHTCTL
+{
+	unsigned char *vram;
+	int xsize, ysize, top;
+	struct SHEET *sheets[MAX_SHEETS];
+	struct SHEET sheets0[MAX_SHEETS];
+};
 /* asm function */
 void io_out8(int port, int data);
 int io_in8(int port);
@@ -106,3 +124,12 @@ unsigned int memtest(unsigned int start, unsigned int end);
 unsigned int memman_total(struct MEMMAN *man);
 unsigned int memman_alloc_4k(struct MEMMAN *man, unsigned int size);
 int memman_free_4k(struct MEMMAN *man, unsigned int addr, unsigned int size);
+
+/* sheet management */
+struct SHTCTL *shtctl_init(struct MEMMAN *memman, unsigned char *vram, int xsize, int ysize);
+struct SHEET *sheet_alloc(struct SHTCTL *ctl);
+void sheet_setbuf(struct SHEET *sht, unsigned char *buf, int xsize, int ysize, int col_inv);
+void sheet_updown(struct SHTCTL *ctl, struct SHEET *sht, int height);
+void sheet_refresh(struct SHTCTL *ctl);
+void sheet_slide(struct SHTCTL *ctl, struct SHEET *sht, int vx0, int vy0);
+void sheet_free(struct SHTCTL *ctl, struct SHEET *sht);

@@ -66,7 +66,7 @@ pipelineflush:
 	MOV SS, AX
 
 	MOV ESI, 0xcc00
-	MOV	EDI, BOTPAK+0xcc00
+	MOV	EDI, BOTPAK + 0xcc00
 	MOV ECX, 512*1024/4
 	CALL memcpy
 
