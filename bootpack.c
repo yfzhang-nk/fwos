@@ -48,7 +48,7 @@ void main(void)
 
 	sprintf(s, "memory %dMB   free %dKB", memtotal/(1024*1024), memman_total(memman)/1024);
 	putfont8_asc(buf_back, binfo->scrnx, 0, 32, COL8_FFFFFF, s);
-	sheet_refresh(shtctl);
+	sheet_refresh(shtctl, sht_back, 0, 0, binfo->scrnx, 48);
     for (;;) {
         io_cli();
 		if (fifo8_status(&keyfifo) != 0)
@@ -58,7 +58,7 @@ void main(void)
 			sprintf(s, "%02x", i);
 			boxfill8(buf_back, binfo->scrnx, COL8_008484, 0, 16, 15, 31);
 			putfont8_asc(buf_back, binfo->scrnx, 0, 16, COL8_FFFFFF, s);
-			sheet_refresh(shtctl);
+			sheet_refresh(shtctl, sht_back, 0, 16, 16, 32);
 		}
 		else if (fifo8_status(&mousefifo) !=0)
 		{
@@ -76,6 +76,7 @@ void main(void)
 					s[2] = 'C';
 				boxfill8(buf_back, binfo->scrnx, COL8_008484, 32, 16, 32+8*15-1, 31);
 				putfont8_asc(buf_back, binfo->scrnx, 32, 16, COL8_FFFFFF, s);
+				sheet_refresh(shtctl, sht_back, 32, 16, 32 + 15 * 8, 32);
 				//鼠标移动
 				mx += mdec.x;
 				my += mdec.y;
@@ -86,6 +87,7 @@ void main(void)
 				sprintf(s, "(%3d, %3d)", mx, my);
 				boxfill8(buf_back, binfo->scrnx, COL8_008484, 0, 0, 79, 15);
 				putfont8_asc(buf_back, binfo->scrnx, 0, 0, COL8_FFFFFF, s);
+				sheet_refresh(shtctl, sht_back, 0, 0, 80, 16);
 				sheet_slide(shtctl, sht_mouse, mx, my);
 			}
 		}
