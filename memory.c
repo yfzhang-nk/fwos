@@ -82,18 +82,20 @@ unsigned int memman_alloc(struct MEMMAN *man, unsigned int size)
 	for (i=0; i < man->frees; ++i)
 	{
 		if (man->free[i].size >= size) // 找到了足够大的内存
-		a = man->free[i].addr;
-		man->free[i].addr += size;
-		man->free[i].size -= size;
-		if (man->free[i].size == 0)
 		{
-			man->frees--;
-			for (;i<man->frees; ++i)
+			a = man->free[i].addr;
+			man->free[i].addr += size;
+			man->free[i].size -= size;
+			if (man->free[i].size == 0)
 			{
-				man->free[i] = man->free[i+1];
+				man->frees--;
+				for (;i < man->frees; ++i)
+				{
+					man->free[i] = man->free[i+1];
+				}
 			}
+			return a;
 		}
-		return a;
 	}
 	return 0; //没有可用内存
 }
