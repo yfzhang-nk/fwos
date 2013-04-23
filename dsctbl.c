@@ -10,6 +10,7 @@
 
 void load_gdtr(int limit, int addr);
 void load_idtr(int limit, int addr);
+void asm_inthandler20(void);
 void asm_inthandler21(void);
 void asm_inthandler27(void);
 void asm_inthandler2c(void);
@@ -68,6 +69,7 @@ void init_gdtidt(void)
 		set_gatedesc(idt + i, 0, 0, 0);
 	}
 	load_idtr(LIMIT_IDT, ADR_IDT);
+	set_gatedesc(idt+0x20, (int)asm_inthandler20, 2*8, AR_INTGATE32);
 	set_gatedesc(idt+0x21, (int)asm_inthandler21, 2*8, AR_INTGATE32);
 	set_gatedesc(idt+0x2c, (int)asm_inthandler2c, 2*8, AR_INTGATE32);
 	set_gatedesc(idt+0x27, (int)asm_inthandler27, 2*8, AR_INTGATE32);

@@ -35,7 +35,9 @@
 
 //图层
 #define MAX_SHEETS 256
-#define SHEET_USE 1
+
+//定时器
+#define MAX_TIMER 500
 
 struct BOOTINFO 
 {
@@ -52,6 +54,7 @@ struct FIFO8
 
 struct FIFO8 keyfifo;
 struct FIFO8 mousefifo;
+struct FIFO8 timerfifo, timerfifo2, timerfifo3;
 
 struct MOUSE_DEC
 {
@@ -88,6 +91,23 @@ struct SHTCTL
 	struct SHEET *sheets[MAX_SHEETS];
 	struct SHEET sheets0[MAX_SHEETS];
 };
+
+// timer
+struct TIMER 
+{
+	unsigned int timeout, flags;
+	struct FIFO8 *fifo;
+	unsigned char data;
+};
+
+struct TIMERCTL 
+{
+	unsigned int count, next, inuse;
+	struct TIMER *timers[MAX_TIMER];
+	struct TIMER timers0[MAX_TIMER];
+};
+struct TIMERCTL timerctl;
+
 /* asm function */
 void io_out8(int port, int data);
 int io_in8(int port);
@@ -140,3 +160,10 @@ void sheet_refreshmap(struct SHTCTL *ctl, int vx0, int vy0, int vx1, int vy1, in
 
 /* window */
 void make_window8(unsigned char *buf, int xsize, int ysize, char *title);
+
+/* c function for PIT */
+void init_pit(void);
+struct TIMER *timer_alloc(void);
+void timer_free(struct TIMER *timer);
+void timer_init(struct TIMER *timer, struct FIFO8 *fifo, unsigned char data);
+void timer_settime(struct TIMER *timer, unsigned int timeout);
