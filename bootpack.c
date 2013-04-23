@@ -4,7 +4,7 @@ void main(void)
 {
 	struct BOOTINFO *binfo = (struct BOOTINFO *) ADR_BOOTINFO;
 	char s[40], keybuf[32], mousebuf[128];
-	int mx, my, i;
+	int mx, my, i, count=0;
 	unsigned int memtotal;
 	struct MEMMAN *memman = (struct MEMMAN *) MEMMAN_ADDR;
 	struct SHTCTL *shtctl;
@@ -27,7 +27,7 @@ void main(void)
 	// 初始化内存管理
 	memtotal = memtest(0x00400000, 0xbfffffff);
 	memman_init(memman);
-	memman_free(memman, 0x00030000, 0x0009e000); 
+	//memman_free(memman, 0x00030000, 0x0009e000); 
 	memman_free(memman, 0x00400000, memtotal - 0x00400000);
 	//初始化图层
 	init_palette();
@@ -36,14 +36,13 @@ void main(void)
 	sht_mouse = sheet_alloc(shtctl);
 	sht_win = sheet_alloc(shtctl);
 	buf_back = (unsigned char *) memman_alloc_4k(memman, binfo->scrnx * binfo->scrny);
-	buf_win = (unsigned char *) memman_alloc_4k(memman, 160 * 68);
+	buf_win = (unsigned char *) memman_alloc_4k(memman, 160 * 52);
 	sheet_setbuf(sht_back, buf_back, binfo->scrnx, binfo->scrny, -1);
 	sheet_setbuf(sht_mouse, buf_mouse, 16, 16, 99);
-	sheet_setbuf(sht_win, buf_win, 160, 68, -1);
+	sheet_setbuf(sht_win, buf_win, 160, 52, -1);
 	init_screen8(buf_back, binfo->scrnx, binfo->scrny);
 	init_mouse_cursor8(buf_mouse, 99);
-	make_window8(buf_win, 160, 68, "window");
-	putfont8_asc(buf_win, 160, 24, 28, COL8_000000, "Zhang Yifei");
+	make_window8(buf_win, 160, 52, "counter");
 	sheet_slide(sht_back, 0, 0);
 	sheet_slide(sht_win, 80, 72);
 	sheet_slide(sht_mouse, mx, my);
@@ -56,7 +55,14 @@ void main(void)
 	sprintf(s, "memory %dMB   free %dKB", memtotal/(1024*1024), memman_total(memman)/1024);
 	putfont8_asc(buf_back, binfo->scrnx, 0, 32, COL8_FFFFFF, s);
 	sheet_refresh(sht_back, 0, 0, binfo->scrnx, 48);
-    for (;;) {
+    for (;;) 
+	{
+		count++;
+		sprintf(s, "%010d", count);
+		boxfill8(buf_win, 160, COL8_C6C6C6, 40, 28, 119, 43);
+		putfont8_asc(buf_win, 160, 40, 28, COL8_000000, s);
+		sheet_refresh(sht_win, 40, 28, 120, 44);
+
         io_cli();
 		if (fifo8_status(&keyfifo) != 0)
 		{
@@ -99,7 +105,8 @@ void main(void)
 			}
 		}
 		else
-            io_stihlt();
+            //io_stihlt();
+            io_sti();
     }   
 }
 
