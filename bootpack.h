@@ -46,15 +46,11 @@ struct BOOTINFO
 	char *vram;
 };
 
-struct FIFO8
+struct FIFO32
 {
-	unsigned char *buf;
+	int *buf;
 	int p, q, size, free, flags;
 };
-
-struct FIFO8 keyfifo;
-struct FIFO8 mousefifo;
-struct FIFO8 timerfifo, timerfifo2, timerfifo3;
 
 struct MOUSE_DEC
 {
@@ -95,15 +91,16 @@ struct SHTCTL
 // timer
 struct TIMER 
 {
+	struct TIMER *next;
 	unsigned int timeout, flags;
-	struct FIFO8 *fifo;
-	unsigned char data;
+	struct FIFO32 *fifo;
+	int data;
 };
 
 struct TIMERCTL 
 {
-	unsigned int count, next, inuse;
-	struct TIMER *timers[MAX_TIMER];
+	unsigned int count, next;
+	struct TIMER *t0;
 	struct TIMER timers0[MAX_TIMER];
 };
 struct TIMERCTL timerctl;
@@ -129,15 +126,15 @@ void init_gdtidt(void);
 void init_pic(void);
 
 /* c function from fifo.c */
-int fifo8_status(struct FIFO8 *fifo);
-int fifo8_get(struct FIFO8 *fifo);
-int fifo8_put(struct FIFO8 *fifo, unsigned char data);
-void fifo8_init(struct FIFO8 *fifo, int size, unsigned char *buf);
+int fifo32_status(struct FIFO32 *fifo);
+int fifo32_get(struct FIFO32 *fifo);
+int fifo32_put(struct FIFO32 *fifo, int data);
+void fifo32_init(struct FIFO32 *fifo, int size, int *buf);
 
 /* c function keyboard&mouse*/
 void wait_KBC_sendready(void);
-void init_keyboard(void);
-void enable_mouse(struct MOUSE_DEC *mdec);
+void init_keyboard(struct FIFO32 *fifo, int data0);
+void enable_mouse(struct FIFO32 *fifo, int data0, struct MOUSE_DEC *mdec);
 int mouse_decode(struct MOUSE_DEC *mdec, unsigned char dat);
 
 /* c function memory */
@@ -165,5 +162,5 @@ void make_window8(unsigned char *buf, int xsize, int ysize, char *title);
 void init_pit(void);
 struct TIMER *timer_alloc(void);
 void timer_free(struct TIMER *timer);
-void timer_init(struct TIMER *timer, struct FIFO8 *fifo, unsigned char data);
+void timer_init(struct TIMER *timer, struct FIFO32 *fifo, unsigned char data);
 void timer_settime(struct TIMER *timer, unsigned int timeout);
