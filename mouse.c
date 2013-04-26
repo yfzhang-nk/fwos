@@ -4,7 +4,7 @@ int mousedata0;
 
 void inthandler2c(int *esp)
 {
-	unsigned char data;
+	int data;
 	io_out8(PIC1_OCW2, 0x64); //通知PIC1 IRQ-12的受理已经完成
 	io_out8(PIC0_OCW2, 0x62); //通知PIC0 IRQ-02的受理已经完成
 	data = io_in8(PORT_KEYDAT);

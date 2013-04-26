@@ -16,6 +16,17 @@
 
 // BOOTINFO 存放位置
 #define ADR_BOOTINFO    0x00000ff0
+#define ADR_IDT         0x0026f800
+#define LIMIT_IDT       0x000007ff
+#define ADR_GDT         0x00270000
+#define LIMIT_GDT       0x0000ffff
+#define ADR_BOTPAK      0x00280000
+#define LIMIT_BOTPAK    0x0007ffff
+#define AR_DATA32_RW    0x4092
+#define AR_CODE32_ER    0x409a
+#define AR_INTGATE32    0x008e
+#define AR_TSS32        0x0089
+
 
 // 键盘鼠标
 #define PORT_KEYDAT	0x0060
@@ -44,6 +55,19 @@ struct BOOTINFO
 	char cyls, leds, vmode, reserve;
 	short scrnx, scrny;
 	char *vram;
+};
+
+// GDT / IDT
+struct SEGMENT_DESCRIPTOR {
+	short limit_low, base_low;
+	char base_mid, access_right;
+	char limit_high, base_high;
+};
+
+struct GATE_DESCRIPTOR {
+	short offset_low, selector;
+	char dw_count, access_right;
+	short offset_high;
 };
 
 struct FIFO32
@@ -105,6 +129,15 @@ struct TIMERCTL
 };
 struct TIMERCTL timerctl;
 
+// multi task
+struct TSS32
+{
+	int backlink, esp0, ss0, esp1, ss1, esp2, ss2, cr3;
+	int eip, eflags, eax, ecx, edx, ebx, esp, ebp, esi, edi;
+	int es, cs, ss, ds, fs, gs;
+	int ldtr, iomap;
+};
+
 /* asm function */
 void io_out8(int port, int data);
 int io_in8(int port);
@@ -159,10 +192,25 @@ void sheet_refreshmap(struct SHTCTL *ctl, int vx0, int vy0, int vx1, int vy1, in
 void init_pit(void);
 struct TIMER *timer_alloc(void);
 void timer_free(struct TIMER *timer);
-void timer_init(struct TIMER *timer, struct FIFO32 *fifo, unsigned char data);
+void timer_init(struct TIMER *timer, struct FIFO32 *fifo, int data);
 void timer_settime(struct TIMER *timer, unsigned int timeout);
 
 /* window */
 void make_window8(unsigned char *buf, int xsize, int ysize, char *title);
 void putfonts8_asc_sht(struct SHEET *sht, int x, int y, int c, int b, char *s, int l);
 void make_textbox8(struct SHEET *sht, int x0, int y0, int sx, int sy, int c);
+
+/* multi task */
+void load_tr(int tr);
+void farjmp(int eip, int cs);
+void task_b_main(void);
+
+/* GDT */
+void load_gdtr(int limit, int addr);
+void load_idtr(int limit, int addr);
+void asm_inthandler20(void);
+void asm_inthandler21(void);
+void asm_inthandler27(void);
+void asm_inthandler2c(void);
+void set_segmdesc(struct SEGMENT_DESCRIPTOR *sd, unsigned int limit, int base, int ar);
+

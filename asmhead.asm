@@ -15,13 +15,13 @@ VRAM	EQU 0x0ff8 ;图像缓冲区的开始地址
 
 ; ----------------------------------------------------
 ; disk
-; 0      0x200       0x4200
+; 0      0x200       0x1000
 ; |ipl.bin|            |asmhead.sys            |
-;0x7c00  0x7e00      0xc200 
+;0x7c00  0x7e00      0x9000 
 ; ----------------------------------------------------
 [SECTION .head]
 start:
-	ORG 0c200h
+	ORG 09000h
 	; 确认VBE是否存在
 	MOV AX, 0x9000
 	MOV ES, AX
@@ -120,8 +120,8 @@ pipelineflush:
 	MOV	GS, AX
 	MOV SS, AX
 
-	MOV ESI, 0xcc00
-	MOV	EDI, BOTPAK + 0xcc00
+	MOV ESI, 0xa000
+	MOV	EDI, BOTPAK + 0xa000 
 	MOV ECX, 512*1024/4
 	CALL memcpy
 
@@ -140,7 +140,7 @@ pipelineflush:
 
 skip:
 	MOV ESP, 0x00310000 ;栈的起始地址
-	JMP DWORD 2*8:0xcc00
+	JMP DWORD 2*8:0xa000
 
 waitkbdout:
 	IN	AL, 0x64

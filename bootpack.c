@@ -21,7 +21,9 @@ void main(void)
 		0,   0,   0,   0,   0,   0,   0,   '7', '8', '9', '-', '4', '5', '6', '+', '1',
 		'2', '3', '0', '.'
 	};
-
+	struct TSS32 tss_a, tss_b;
+	struct SEGMENT_DESCRIPTOR *gdt = (struct SEGMENT_DESCRIPTOR *) ADR_GDT;
+	int task_b_esp;
 	mx = (binfo->scrnx - 16) / 2; 
 	my = (binfo->scrny - 28 - 16) / 2;
 	init_gdtidt();
@@ -37,10 +39,10 @@ void main(void)
 
 	timer = timer_alloc();
 	timer_init(timer, &fifo, 10);
-	timer_settime(timer, 1000);
+	timer_settime(timer, 300);
 	timer2 = timer_alloc();
 	timer_init(timer2, &fifo, 3);
-	timer_settime(timer2, 300);
+	timer_settime(timer2, 100);
 	timer3 = timer_alloc();
 	timer_init(timer3, &fifo, 1);
 	timer_settime(timer3, 50);
@@ -80,6 +82,32 @@ void main(void)
 
 	sprintf(s, "memory %dMB   free %dKB", memtotal/(1024*1024), memman_total(memman)/1024);
 	putfonts8_asc_sht(sht_back, 0, 32, COL8_FFFFFF, COL8_008484, s, 40);
+
+	tss_a.ldtr = 0;
+	tss_a.iomap = 0x40000000;
+	tss_b.ldtr = 0;
+	tss_b.iomap = 0x40000000;
+	set_segmdesc(gdt + 3, 103, (int) &tss_a, AR_TSS32);
+	set_segmdesc(gdt + 4, 103, (int) &tss_b, AR_TSS32);
+	load_tr(3 * 8);
+	task_b_esp = memman_alloc_4k(memman, 64*1024) + 64*1024;
+	tss_b.eip = (int) &task_b_main;
+	tss_b.eflags = 0x00000202;  // IF = 1
+	tss_b.eax = 0;
+	tss_b.ecx = 0;
+	tss_b.edx = 0;
+	tss_b.ebx = 0;
+	tss_b.esp = task_b_esp;
+	tss_b.ebp = 0;
+	tss_b.esi = 0;
+	tss_b.edi = 0;
+	tss_b.es = 1*8;
+	tss_b.cs = 2*8;
+	tss_b.ss = 1*8;
+	tss_b.ds = 1*8;
+	tss_b.fs = 1*8;
+	tss_b.gs = 1*8;
+	
     for (;;) 
 	{
 		//sprintf(s, "%010d", timerctl.count);
@@ -119,14 +147,14 @@ void main(void)
 				if (mouse_decode(&mdec, i-512) > 0)
 				{
 					//三字节到齐，显示
-					sprintf(s, "[lcr %4d %4d]", mdec.x, mdec.y);
+					//sprintf(s, "[lcr %4d %4d]", mdec.x, mdec.y);
 					if ((mdec.btn & 0x01) != 0)
 						s[1] = 'L';
 					if ((mdec.btn & 0x02) != 0)
 						s[3] = 'R';
 					if ((mdec.btn & 0x04) != 0)
 						s[2] = 'C';
-					putfonts8_asc_sht(sht_back, 32, 16, COL8_FFFFFF, COL8_008484, s, 15);
+					//putfonts8_asc_sht(sht_back, 32, 16, COL8_FFFFFF, COL8_008484, s, 15);
 					//鼠标移动
 					mx += mdec.x;
 					my += mdec.y;
@@ -134,8 +162,8 @@ void main(void)
 					if (my < 0) my = 0;
 					if (mx > binfo->scrnx - 1) mx = binfo->scrnx - 1;
 					if (my > binfo->scrny - 1) my = binfo->scrny - 1;
-					sprintf(s, "(%3d, %3d)", mx, my);
-					putfonts8_asc_sht(sht_back, 0, 0, COL8_FFFFFF, COL8_008484, s, 10);
+					//sprintf(s, "(%3d, %3d)", mx, my);
+					//putfonts8_asc_sht(sht_back, 0, 0, COL8_FFFFFF, COL8_008484, s, 10);
 					sheet_slide(sht_mouse, mx, my);
 					if ((mdec.btn & 0x01) != 0)
 					{
@@ -146,6 +174,7 @@ void main(void)
 			else if (i == 10)
 			{
 				putfonts8_asc_sht(sht_back, 0, 64, COL8_FFFFFF, COL8_008484, "10[sec]", 7);
+				farjmp(0, 4*8);
 			}
 			else if (i == 3)
 			{
@@ -166,8 +195,8 @@ void main(void)
 			}
 		}
 		else
-            //io_stihlt();
-            io_sti();
+            io_stihlt();
+            //io_sti();
     }   
 }
 
@@ -243,4 +272,31 @@ void make_textbox8(struct SHEET *sht, int x0, int y0, int sx, int sy, int c)
 	boxfill8(sht->buf, sht->bxsize, COL8_C6C6C6, x1 + 1, y0 - 2, x1 + 1, y1 + 1);
 	boxfill8(sht->buf, sht->bxsize, c, x0 - 1, y0 - 1, x1 + 0, y1 + 0);
 	return;
+}
+
+void task_b_main(void)
+{
+	struct FIFO32 fifo;
+	struct TIMER *timer;
+	int i, fifobuf[128];
+	fifo32_init(&fifo, 128, fifobuf);
+	timer = timer_alloc();
+	timer_init(timer, &fifo, 1);
+	timer_settime(timer, 200);
+	for (;;) 
+	{
+		io_cli();
+		if (fifo32_status(&fifo) == 0)
+		{
+			io_sti();
+			asm("HLT");
+		}
+		else
+		{
+			i = fifo32_get(&fifo);
+			io_sti();
+			if (i == 1)
+				farjmp(0, 3*8);
+		}
+	}
 }

@@ -4,7 +4,7 @@ int keydata0;
 
 void inthandler21(int *esp)
 {
-	unsigned char data;
+	int data;
 	io_out8(PIC0_OCW2, 0x61); //通知PIC “IRQ-01 已经受理完毕
 	data = io_in8(PORT_KEYDAT);
 	fifo32_put(keyfifo, data + keydata0);
