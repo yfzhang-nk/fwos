@@ -137,6 +137,8 @@ struct TSS32
 	int es, cs, ss, ds, fs, gs;
 	int ldtr, iomap;
 };
+struct TIMER *mt_timer;
+int mt_tr;
 
 /* asm function */
 void io_out8(int port, int data);
@@ -203,7 +205,9 @@ void make_textbox8(struct SHEET *sht, int x0, int y0, int sx, int sy, int c);
 /* multi task */
 void load_tr(int tr);
 void farjmp(int eip, int cs);
-void task_b_main(void);
+void task_b_main(struct SHEET *sht_back);
+void mt_init(void);
+void mt_taskswitch(void);
 
 /* GDT */
 void load_gdtr(int limit, int addr);

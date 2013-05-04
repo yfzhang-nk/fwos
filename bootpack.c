@@ -4,7 +4,7 @@ void main(void)
 {
 	struct BOOTINFO *binfo = (struct BOOTINFO *) ADR_BOOTINFO;
 	char s[40];
-	int mx, my, i, cursor_x, cursor_c;
+	int mx, my, i, cursor_x, cursor_c, task_b_esp;
 	int fifobuf[128];
 	unsigned int memtotal;
 	struct MEMMAN *memman = (struct MEMMAN *) MEMMAN_ADDR;
@@ -23,7 +23,6 @@ void main(void)
 	};
 	struct TSS32 tss_a, tss_b;
 	struct SEGMENT_DESCRIPTOR *gdt = (struct SEGMENT_DESCRIPTOR *) ADR_GDT;
-	int task_b_esp;
 	mx = (binfo->scrnx - 16) / 2; 
 	my = (binfo->scrny - 28 - 16) / 2;
 	init_gdtidt();
@@ -90,7 +89,8 @@ void main(void)
 	set_segmdesc(gdt + 3, 103, (int) &tss_a, AR_TSS32);
 	set_segmdesc(gdt + 4, 103, (int) &tss_b, AR_TSS32);
 	load_tr(3 * 8);
-	task_b_esp = memman_alloc_4k(memman, 64*1024) + 64*1024;
+	task_b_esp = memman_alloc_4k(memman, 64*1024) + 64*1024 - 8;
+	*((int *) (task_b_esp+4)) = (int) sht_back;
 	tss_b.eip = (int) &task_b_main;
 	tss_b.eflags = 0x00000202;  // IF = 1
 	tss_b.eax = 0;
@@ -107,14 +107,10 @@ void main(void)
 	tss_b.ds = 1*8;
 	tss_b.fs = 1*8;
 	tss_b.gs = 1*8;
+	mt_init();
 	
     for (;;) 
 	{
-		//sprintf(s, "%010d", timerctl.count);
-		//boxfill8(buf_win, 160, COL8_C6C6C6, 40, 28, 119, 43);
-		//putfont8_asc(buf_win, 160, 40, 28, COL8_000000, s);
-		//sheet_refresh(sht_win, 40, 28, 120, 44);
-
         io_cli();
 		if (fifo32_status(&fifo) != 0)
 		{
@@ -147,14 +143,14 @@ void main(void)
 				if (mouse_decode(&mdec, i-512) > 0)
 				{
 					//三字节到齐，显示
-					//sprintf(s, "[lcr %4d %4d]", mdec.x, mdec.y);
+					sprintf(s, "[lcr %4d %4d]", mdec.x, mdec.y);
 					if ((mdec.btn & 0x01) != 0)
 						s[1] = 'L';
 					if ((mdec.btn & 0x02) != 0)
 						s[3] = 'R';
 					if ((mdec.btn & 0x04) != 0)
 						s[2] = 'C';
-					//putfonts8_asc_sht(sht_back, 32, 16, COL8_FFFFFF, COL8_008484, s, 15);
+					putfonts8_asc_sht(sht_back, 32, 16, COL8_FFFFFF, COL8_008484, s, 15);
 					//鼠标移动
 					mx += mdec.x;
 					my += mdec.y;
@@ -162,8 +158,8 @@ void main(void)
 					if (my < 0) my = 0;
 					if (mx > binfo->scrnx - 1) mx = binfo->scrnx - 1;
 					if (my > binfo->scrny - 1) my = binfo->scrny - 1;
-					//sprintf(s, "(%3d, %3d)", mx, my);
-					//putfonts8_asc_sht(sht_back, 0, 0, COL8_FFFFFF, COL8_008484, s, 10);
+					sprintf(s, "(%3d, %3d)", mx, my);
+					putfonts8_asc_sht(sht_back, 0, 0, COL8_FFFFFF, COL8_008484, s, 10);
 					sheet_slide(sht_mouse, mx, my);
 					if ((mdec.btn & 0x01) != 0)
 					{
@@ -174,7 +170,6 @@ void main(void)
 			else if (i == 10)
 			{
 				putfonts8_asc_sht(sht_back, 0, 64, COL8_FFFFFF, COL8_008484, "10[sec]", 7);
-				farjmp(0, 4*8);
 			}
 			else if (i == 3)
 			{
@@ -274,29 +269,44 @@ void make_textbox8(struct SHEET *sht, int x0, int y0, int sx, int sy, int c)
 	return;
 }
 
-void task_b_main(void)
+void task_b_main(struct SHEET *sht_back)
 {
 	struct FIFO32 fifo;
-	struct TIMER *timer;
-	int i, fifobuf[128];
+	struct TIMER *timer_ls, *timer_put;
+	int i, fifobuf[128], count=0, count0=0;
+	char s[12];
 	fifo32_init(&fifo, 128, fifobuf);
-	timer = timer_alloc();
-	timer_init(timer, &fifo, 1);
-	timer_settime(timer, 200);
+	timer_ls = timer_alloc();
+	timer_init(timer_ls, &fifo, 100);
+	timer_settime(timer_ls, 100);
+	timer_put = timer_alloc();
+	timer_init(timer_put, &fifo, 1);
+	timer_settime(timer_put, 1);
 	for (;;) 
 	{
+		count++;
 		io_cli();
 		if (fifo32_status(&fifo) == 0)
 		{
 			io_sti();
-			asm("HLT");
 		}
 		else
 		{
 			i = fifo32_get(&fifo);
 			io_sti();
 			if (i == 1)
-				farjmp(0, 3*8);
+			{
+				sprintf(s, "%11d", count);
+				putfonts8_asc_sht(sht_back, 0, 144, COL8_FFFFFF, COL8_008484, s, 11);
+				timer_settime(timer_put, 1);
+			}
+			else if (i == 100)
+			{
+				sprintf(s, "%11d", count - count0);
+				putfonts8_asc_sht(sht_back, 0, 128, COL8_FFFFFF, COL8_008484, s, 11);
+				count0 = count;
+				timer_settime(timer_ls, 100);
+			}
 		}
 	}
 }
