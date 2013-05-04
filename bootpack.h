@@ -50,6 +50,12 @@
 //定时器
 #define MAX_TIMER 500
 
+//多任务
+#define MAX_TASKS 1000   //max task count
+#define TASK_GDT0 3      //定义从GDT的几号开始分配TSS
+#define MAX_TASKS_LV 100
+#define MAX_TASKLEVELS 10
+
 struct BOOTINFO 
 {
 	char cyls, leds, vmode, reserve;
@@ -74,6 +80,7 @@ struct FIFO32
 {
 	int *buf;
 	int p, q, size, free, flags;
+	struct TASK *task;
 };
 
 struct MOUSE_DEC
@@ -120,7 +127,6 @@ struct TIMER
 	struct FIFO32 *fifo;
 	int data;
 };
-
 struct TIMERCTL 
 {
 	unsigned int count, next;
@@ -137,8 +143,28 @@ struct TSS32
 	int es, cs, ss, ds, fs, gs;
 	int ldtr, iomap;
 };
-struct TIMER *mt_timer;
-int mt_tr;
+struct TASK
+{
+	int sel, flags;
+	int priority, level;
+	struct TSS32 tss;
+};
+struct TASKLEVEL
+{
+	int running;  //正在运行的任务数量
+	int now; //记录当前正在运行的是哪个任务
+	struct TASK *tasks[MAX_TASKS_LV];
+};
+struct TASKCTL
+{
+	int now_lv;  //现在活动中的level
+	char lv_change;  //在下次任务切换时是否需要改变LEVEL
+	struct TASKLEVEL level[MAX_TASKLEVELS];
+	struct TASK tasks0[MAX_TASKS];
+};
+struct TASKCTL *taskctl;
+struct TIMER *task_timer;
+
 
 /* asm function */
 void io_out8(int port, int data);
@@ -164,7 +190,7 @@ void init_pic(void);
 int fifo32_status(struct FIFO32 *fifo);
 int fifo32_get(struct FIFO32 *fifo);
 int fifo32_put(struct FIFO32 *fifo, int data);
-void fifo32_init(struct FIFO32 *fifo, int size, int *buf);
+void fifo32_init(struct FIFO32 *fifo, int size, int *buf, struct TASK *task);
 
 /* c function keyboard&mouse*/
 void wait_KBC_sendready(void);
@@ -198,7 +224,7 @@ void timer_init(struct TIMER *timer, struct FIFO32 *fifo, int data);
 void timer_settime(struct TIMER *timer, unsigned int timeout);
 
 /* window */
-void make_window8(unsigned char *buf, int xsize, int ysize, char *title);
+void make_window8(unsigned char *buf, int xsize, int ysize, char *title, char act);
 void putfonts8_asc_sht(struct SHEET *sht, int x, int y, int c, int b, char *s, int l);
 void make_textbox8(struct SHEET *sht, int x0, int y0, int sx, int sy, int c);
 
@@ -206,8 +232,10 @@ void make_textbox8(struct SHEET *sht, int x0, int y0, int sx, int sy, int c);
 void load_tr(int tr);
 void farjmp(int eip, int cs);
 void task_b_main(struct SHEET *sht_back);
-void mt_init(void);
-void mt_taskswitch(void);
+struct TASK *task_init(struct MEMMAN *memman);
+struct TASK *task_alloc(void);
+void task_run(struct TASK *task, int level, int priority);
+void task_switch(void);
 
 /* GDT */
 void load_gdtr(int limit, int addr);
