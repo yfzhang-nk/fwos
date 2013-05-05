@@ -234,7 +234,7 @@ void make_textbox8(struct SHEET *sht, int x0, int y0, int sx, int sy, int c);
 /* multi task */
 void load_tr(int tr);
 void farjmp(int eip, int cs);
-void console_task(struct SHEET *sht_cons);
+void console_task(struct SHEET *sht_cons, unsigned int memtotal);
 struct TASK *task_init(struct MEMMAN *memman);
 struct TASK *task_alloc(void);
 void task_run(struct TASK *task, int level, int priority);
