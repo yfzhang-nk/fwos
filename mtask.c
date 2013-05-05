@@ -1,16 +1,22 @@
 #include "bootpack.h"
 
+void task_idle(void)
+{
+	for (;;)
+		asm("HLT");
+}
+
 struct TASK *task_now(void)
 {
-	struct TASKLEVEL *t1 = &taskctl->level[taskctl->now_lv];
-	return t1->tasks[t1->now];
+	struct TASKLEVEL *tl = &taskctl->level[taskctl->now_lv];
+	return tl->tasks[tl->now];
 }
 
 void task_add(struct TASK *task)
 {
-	struct TASKLEVEL *t1 = &taskctl->level[task->level];
-	t1->tasks[t1->running] = task;
-	t1->running++;
+	struct TASKLEVEL *tl = &taskctl->level[task->level];
+	tl->tasks[tl->running] = task;
+	tl->running++;
 	task->flags = 2;
 	return;
 }
@@ -18,21 +24,21 @@ void task_add(struct TASK *task)
 void task_remove(struct TASK *task)
 {
 	int i;
-	struct TASKLEVEL *t1 = &taskctl->level[task->level];
+	struct TASKLEVEL *tl = &taskctl->level[task->level];
 	//寻找task所在位置
-	for (i = 0; i < t1->running; ++i)
+	for (i = 0; i < tl->running; ++i)
 	{
-		if (t1->tasks[i] == task) break;
+		if (tl->tasks[i] == task) break;
 	}
-	t1->running--;
-	if (i < t1->now)
-		t1->now --;
-	if (t1->now >= t1->running)
-		t1->now = 0;
+	tl->running--;
+	if (i < tl->now)
+		tl->now --;
+	if (tl->now >= tl->running)
+		tl->now = 0;
 	task->flags = 1;
-	for (; i < t1->running; ++i)
+	for (; i < tl->running; ++i)
 	{
-		t1->tasks[i] = t1->tasks[i+1];
+		tl->tasks[i] = tl->tasks[i+1];
 	}
 	return;
 }
@@ -52,7 +58,7 @@ void task_switchsub(void)
 struct TASK *task_init(struct MEMMAN *memman)
 {
 	int i;
-	struct TASK *task;
+	struct TASK *task, *idle;
 	struct SEGMENT_DESCRIPTOR *gdt = (struct SEGMENT_DESCRIPTOR *) ADR_GDT;
 	taskctl = (struct TASKCTL *) memman_alloc_4k(memman, sizeof (struct TASKCTL));
 	for (i = 0; i < MAX_TASKS; ++i)
@@ -75,6 +81,16 @@ struct TASK *task_init(struct MEMMAN *memman)
 	load_tr(task->sel);
 	task_timer = timer_alloc();
 	timer_settime(task_timer, task->priority);
+	
+	idle = task_alloc();
+	idle->tss.esp = memman_alloc_4k(memman, 64*1024) + 64 * 1024;
+	idle->tss.eip = (int) &task_idle;
+	idle->tss.es = 1*8;
+	idle->tss.cs = 2*8;
+	idle->tss.ss = 1*8;
+	idle->tss.fs = 1*8;
+	idle->tss.gs = 1*8;
+	task_run(idle, MAX_TASKLEVELS - 1, 1);
 	return task;
 }
 

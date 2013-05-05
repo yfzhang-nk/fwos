@@ -37,6 +37,7 @@
 #define KBC_MODE 0x47
 #define KEYCMD_SENDTO_MOUSE 0xd4
 #define MOUSECMD_ENABLE 0xf4
+#define KEYCMD_LED 0xed
 
 // 内存
 #define EFLAGS_AC_BIT 0x0004000
@@ -147,6 +148,7 @@ struct TASK
 {
 	int sel, flags;
 	int priority, level;
+	struct FIFO32 fifo;
 	struct TSS32 tss;
 };
 struct TASKLEVEL
@@ -224,6 +226,7 @@ void timer_init(struct TIMER *timer, struct FIFO32 *fifo, int data);
 void timer_settime(struct TIMER *timer, unsigned int timeout);
 
 /* window */
+void make_wtitle8(unsigned char *buf, int xsize, char *title, char act);
 void make_window8(unsigned char *buf, int xsize, int ysize, char *title, char act);
 void putfonts8_asc_sht(struct SHEET *sht, int x, int y, int c, int b, char *s, int l);
 void make_textbox8(struct SHEET *sht, int x0, int y0, int sx, int sy, int c);
@@ -231,11 +234,12 @@ void make_textbox8(struct SHEET *sht, int x0, int y0, int sx, int sy, int c);
 /* multi task */
 void load_tr(int tr);
 void farjmp(int eip, int cs);
-void task_b_main(struct SHEET *sht_back);
+void console_task(struct SHEET *sht_cons);
 struct TASK *task_init(struct MEMMAN *memman);
 struct TASK *task_alloc(void);
 void task_run(struct TASK *task, int level, int priority);
 void task_switch(void);
+struct TASK *task_now(void);
 
 /* GDT */
 void load_gdtr(int limit, int addr);
