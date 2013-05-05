@@ -16,6 +16,7 @@
 
 // BOOTINFO 存放位置
 #define ADR_BOOTINFO    0x00000ff0
+#define ADR_DISKIMG		0x00100000
 #define ADR_IDT         0x0026f800
 #define LIMIT_IDT       0x000007ff
 #define ADR_GDT         0x00270000
@@ -167,6 +168,13 @@ struct TASKCTL
 struct TASKCTL *taskctl;
 struct TIMER *task_timer;
 
+struct FILEINFO
+{
+	unsigned char name[8], ext[3], type;
+	char reserve[10];
+	unsigned short time, date, clustno;
+	unsigned int size;
+};
 
 /* asm function */
 void io_out8(int port, int data);

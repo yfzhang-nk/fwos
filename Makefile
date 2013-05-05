@@ -31,10 +31,8 @@ asmhead.sys: asmhead.asm
 
 fwos: ipl.bin asmhead.sys bootpack.sys 
 	$(DD) if=ipl.bin of=fwos.img bs=512 
-	$(DD) if=asmhead.sys of=fwos.img bs=512 seek=8
-	$(DD) if=bootpack.sys of=fwos.img bs=512 seek=16
-	#$(DD) if=asmhead.sys of=fwos.img bs=512 seek=33
-	#$(DD) if=bootpack.sys of=fwos.img bs=512 seek=38
+	$(DD) if=asmhead.sys of=fwos.img bs=512 seek=33
+	$(DD) if=bootpack.sys of=fwos.img bs=512 seek=38
 	$(DD) if=/dev/zero of=fwos.img bs=512 seek=2880 count=0
 
 clean:

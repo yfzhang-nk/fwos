@@ -65,7 +65,7 @@ next:
 	JB	readloop
 
 	MOV [0x0ff0], CH
-	JMP 09000h
+	JMP 0c200h
 fin:
 	HLT						
 	JMP	fin				

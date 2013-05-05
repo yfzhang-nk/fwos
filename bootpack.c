@@ -385,6 +385,7 @@ void console_task(struct SHEET *sht_cons, unsigned int memtotal)
 	char s[30], cmdline[30];
 	int x, y;
 	struct MEMMAN *memman = (struct MEMMAN *) MEMMAN_ADDR;
+	struct FILEINFO *finfo = (struct FILEINFO *) (ADR_DISKIMG + 0x002600);
 	fifo32_init(&task->fifo, 128, fifobuf, task);
 	timer = timer_alloc();
 	timer_init(timer, &task->fifo, 1);
@@ -441,7 +442,8 @@ void console_task(struct SHEET *sht_cons, unsigned int memtotal)
 					putfonts8_asc_sht(sht_cons, cursor_x, cursor_y, COL8_FFFFFF, COL8_000000, " ", 1);
 					cmdline[cursor_x/8 -2] = 0;
 					cursor_y = cons_newline(cursor_y, sht_cons);
-					if (cmdline[0] == 'm' && cmdline[1] == 'e' && cmdline[2] == 'm' && cmdline[3] == 0)
+					//if (cmdline[0] == 'm' && cmdline[1] == 'e' && cmdline[2] == 'm' && cmdline[3] == 0)
+					if (strcmp(cmdline, "mem") == 0)
 					{
 						sprintf(s, "total   %dMB", memtotal / (1024 * 1024));
 						putfonts8_asc_sht(sht_cons, 8, cursor_y, COL8_FFFFFF, COL8_000000, s, 30);
@@ -451,7 +453,43 @@ void console_task(struct SHEET *sht_cons, unsigned int memtotal)
 						cursor_y = cons_newline(cursor_y, sht_cons);
 						cursor_y = cons_newline(cursor_y, sht_cons);
 					}
-					else
+					else if (strcmp(cmdline, "cls") == 0)
+					{
+						for (y = 28; y < 28 + 128; ++y) 
+						{
+							for (x = 8; x < 8 + 240; ++x) 
+							{
+								sht_cons->buf[x + y * sht_cons->bxsize] = COL8_000000;
+							}
+						}
+						sheet_refresh(sht_cons, 8, 28, 8 + 240, 28 + 128);
+						cursor_y = 28;
+					}
+					else if (strcmp(cmdline, "dir") == 0)
+					{
+						for (x = 0; x < 224; ++x)
+						{
+							if (finfo[x].name[0] == 0x00) break;
+							if (finfo[x].name[0] != 0xe5)
+							{
+								if ((finfo[x].type & 0x18) == 0)
+								{
+									sprintf(s, "filename.ext  %7d", finfo[x].size);
+									for (y = 0; y < 8; ++y)
+									{
+										s[y] = finfo[x].name[y];
+									}
+									s[9] = finfo[x].ext[0];
+									s[10] = finfo[x].ext[1];
+									s[11] = finfo[x].ext[2];
+									putfonts8_asc_sht(sht_cons, 8, cursor_y, COL8_FFFFFF, COL8_000000, s, 30);
+									cursor_y = cons_newline(cursor_y, sht_cons);
+								}
+							}
+						}
+						cursor_y = cons_newline(cursor_y, sht_cons);
+					}
+					else if (cmdline[0] != 0)
 					{
 						putfonts8_asc_sht(sht_cons, 8, cursor_y, COL8_FFFFFF, COL8_000000, "Bad command.", 12);
 						cursor_y = cons_newline(cursor_y, sht_cons);
@@ -488,13 +526,17 @@ int cons_newline(int cursor_y, struct SHEET *sheet)
 	} 
 	else 
 	{
-		for (y = 28; y < 28 + 112; y++) {
-			for (x = 8; x < 8 + 240; x++) {
+		for (y = 28; y < 28 + 112; y++) 
+		{
+			for (x = 8; x < 8 + 240; x++) 
+			{
 				sheet->buf[x + y * sheet->bxsize] = sheet->buf[x + (y + 16) * sheet->bxsize];
 			}
 		}
-		for (y = 28 + 112; y < 28 + 128; y++) {
-			for (x = 8; x < 8 + 240; x++) {
+		for (y = 28 + 112; y < 28 + 128; y++) 
+		{
+			for (x = 8; x < 8 + 240; x++) 
+			{
 				sheet->buf[x + y * sheet->bxsize] = COL8_000000;
 			}
 		}
