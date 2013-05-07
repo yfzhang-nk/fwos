@@ -176,6 +176,12 @@ struct FILEINFO
 	unsigned int size;
 };
 
+struct CONSOLE
+{
+	struct SHEET *sht;
+	int cur_x, cur_y, cur_c;
+};
+
 /* asm function */
 void io_out8(int port, int data);
 int io_in8(int port);
@@ -242,6 +248,7 @@ void make_textbox8(struct SHEET *sht, int x0, int y0, int sx, int sy, int c);
 /* multi task */
 void load_tr(int tr);
 void farjmp(int eip, int cs);
+void farcall(int eip, int cs);
 void console_task(struct SHEET *sht_cons, unsigned int memtotal);
 struct TASK *task_init(struct MEMMAN *memman);
 struct TASK *task_alloc(void);
@@ -257,4 +264,15 @@ void asm_inthandler21(void);
 void asm_inthandler27(void);
 void asm_inthandler2c(void);
 void set_segmdesc(struct SEGMENT_DESCRIPTOR *sd, unsigned int limit, int base, int ar);
+void asm_cons_putchar(void);
 
+/* console */
+void cons_putchar(struct CONSOLE *cons, int chr, char move);
+void cons_runcmd(char *cmdline, struct CONSOLE *cons, int *fat, unsigned int memtotal);
+void cmd_mem(struct CONSOLE *cons, unsigned int memtotal);
+void cmd_cls(struct CONSOLE *cons);
+void cmd_dir(struct CONSOLE *cons);
+void cmd_cat(struct CONSOLE *cons, int *fat, char *cmdline);
+void cmd_hlt(struct CONSOLE *cons, int *fat);
+void cons_newline(struct CONSOLE *cons);
+void console_task(struct SHEET *sht_cons, unsigned int memtotal);

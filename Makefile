@@ -18,7 +18,7 @@ ipl.bin: ipl.asm
 	$(NASM) ipl.asm -o ipl.bin	
 
 %.o: %.c
-	$(GCC) -m32 -c -o $@ $<
+	$(GCC) -m32 -fno-stack-protector -c -o $@ $<
 nasmfunc.o: nasmfunc.asm
 	$(NASM) -felf -o nasmfunc.o nasmfunc.asm
 	

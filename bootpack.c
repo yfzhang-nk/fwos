@@ -1,5 +1,6 @@
 #include "bootpack.h"
 #include <stdio.h>
+
 void main(void)
 {
 	struct BOOTINFO *binfo = (struct BOOTINFO *) ADR_BOOTINFO;

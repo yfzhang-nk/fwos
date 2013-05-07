@@ -1,0 +1,10 @@
+BITS 32
+	MOV AL, 'A'
+	INT 0x40
+	MOV AL, 'B'
+	INT 0x40
+	MOV AL, 'C'
+	INT 0x40
+	MOV AL, 'D'
+	INT 0x40
+	RETF
