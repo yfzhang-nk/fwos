@@ -19,7 +19,7 @@
 	DD	0xffffffff		
 	DB	"HARIBOTEOS "	
 	DB	"FAT12   "		
-	TIMES 18 db 0	; 填充剩下的空间，使生成的二进制代码恰好为512字节
+	TIMES 18 db 0	
 
 entry:
 	MOV	AX,0			
@@ -65,7 +65,7 @@ next:
 	JB	readloop
 
 	MOV [0x0ff0], CH
-	JMP 0c200h
+	JMP 0c400h
 fin:
 	HLT						
 	JMP	fin				

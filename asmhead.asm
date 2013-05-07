@@ -21,7 +21,7 @@ VRAM	EQU 0x0ff8 ;图像缓冲区的开始地址
 ; ----------------------------------------------------
 [SECTION .head]
 start:
-	ORG 0c200h
+	ORG 0c400h
 	; 确认VBE是否存在
 	MOV AX, 0x9000
 	MOV ES, AX
@@ -138,6 +138,16 @@ pipelineflush:
 	SUB	ECX, 512/4
 	CALL memcpy
 
+	;MOV		EBX,BOTPAK
+	;MOV		ECX,[EBX+16]
+	;ADD		ECX,3
+	;SHR		ECX,2
+	;JZ		skip
+	;MOV		ESI,0x00310000 
+	;ADD		ESI,EBX
+	;MOV		EDI,[EBX+12]
+	;CALL	memcpy
+
 skip:
 	MOV ESP, 0x00310000 ;栈的起始地址
 	JMP DWORD 2*8:0xcc00
@@ -170,3 +180,4 @@ GDTR0:
 
 ALIGNB	16
 
+bootpack:

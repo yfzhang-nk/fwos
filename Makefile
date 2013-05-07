@@ -5,9 +5,11 @@ CAT = cat
 LD = ld
 DD = dd
 DEL = rm
+CP = cp
+MOUNT = mount
 OBJCOPY = objcopy
 
-MIDOBJ = graphic.o dsctbl.o int.o libc_required.o fifo.o keyboard.o mouse.o memory.o sheet.o timer.o mtask.o
+MIDOBJ = graphic.o dsctbl.o int.o libc_required.o fifo.o keyboard.o mouse.o memory.o sheet.o timer.o mtask.o window.o console.o file.o
 
 default:
 	$(MAKE) fwos
@@ -26,14 +28,30 @@ bootpack.elf: bootpack.o nasmfunc.o $(MIDOBJ) libc.a
 bootpack.sys: bootpack.elf
 	$(OBJCOPY) -Obinary bootpack.elf bootpack.sys
 
-asmhead.sys: asmhead.asm 
-	$(NASM) asmhead.asm -o asmhead.sys 
+hlt.bin: hlt.asm
+	$(NASM) hlt.asm -o hlt.bin
 
-fwos: ipl.bin asmhead.sys bootpack.sys 
+asmhead.sys: asmhead.asm 
+	$(NASM) asmhead.asm -o asmhead.sys
+#asmhead.mid: asmhead.asm 
+#	$(NASM) asmhead.asm -o asmhead.mid
+
+#asmhead.sys: bootpack.sys asmhead.mid
+#	$(CAT) asmhead.mid bootpack.sys > asmhead.sys
+
+fwos: ipl.bin asmhead.sys bootpack.sys hlt.bin
+	$(DEL) -f fwos.img
 	$(DD) if=ipl.bin of=fwos.img bs=512 
-	$(DD) if=asmhead.sys of=fwos.img bs=512 seek=33
+	#$(DD) if=asmhead.sys of=fwos.img bs=512 seek=33
+	$(DD) if=/dev/zero of=fwos.img bs=512 seek=2880 count=0
+	sudo $(MOUNT) -o loop fwos.img floopy/
+	sudo $(CP) asmhead.sys floopy/
+	sudo $(CP) test.txt floopy/
+	sudo $(CP) hlt.bin floopy/
+	sleep 2
+	sudo umount floopy/
 	$(DD) if=bootpack.sys of=fwos.img bs=512 seek=38
 	$(DD) if=/dev/zero of=fwos.img bs=512 seek=2880 count=0
 
 clean:
-	$(DEL) ipl.bin asmhead.sys bootpack.o bootpack.elf bootpack.sys nasmfunc.o $(MIDOBJ) fwos.img
+	$(DEL) ipl.bin asmhead.sys bootpack.o bootpack.elf bootpack.sys nasmfunc.o $(MIDOBJ) fwos.img hlt.bin
