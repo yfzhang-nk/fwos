@@ -264,15 +264,18 @@ void asm_inthandler21(void);
 void asm_inthandler27(void);
 void asm_inthandler2c(void);
 void set_segmdesc(struct SEGMENT_DESCRIPTOR *sd, unsigned int limit, int base, int ar);
-void asm_cons_putchar(void);
+void asm_os_api(void);
 
 /* console */
 void cons_putchar(struct CONSOLE *cons, int chr, char move);
+void cons_putstr1(struct CONSOLE *cons, char *s, int l);
+void cons_putstr0(struct CONSOLE *cons, char *s);
 void cons_runcmd(char *cmdline, struct CONSOLE *cons, int *fat, unsigned int memtotal);
 void cmd_mem(struct CONSOLE *cons, unsigned int memtotal);
 void cmd_cls(struct CONSOLE *cons);
 void cmd_dir(struct CONSOLE *cons);
 void cmd_cat(struct CONSOLE *cons, int *fat, char *cmdline);
-void cmd_hlt(struct CONSOLE *cons, int *fat);
+int cmd_app(struct CONSOLE *cons, int *fat, char *cmdline);
 void cons_newline(struct CONSOLE *cons);
 void console_task(struct SHEET *sht_cons, unsigned int memtotal);
+void os_api(int edi, int esi, int ebp, int esp, int ebx, int edx, int ecx, int eax);

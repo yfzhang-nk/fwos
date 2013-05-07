@@ -1,0 +1,8 @@
+BITS 32
+	MOV EDX, 1
+	MOV AL, 'A'
+	INT 0x40
+	MOV EDX, 1
+	MOV AL, 'A'
+	INT 0x40
+	RETF

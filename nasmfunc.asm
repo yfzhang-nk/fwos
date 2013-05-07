@@ -10,8 +10,8 @@ GLOBAL load_gdtr, load_idtr
 GLOBAL asm_inthandler20, asm_inthandler21, asm_inthandler27, asm_inthandler2c
 EXTERN inthandler20, inthandler21, inthandler27, inthandler2c
 GLOBAL load_cr0, store_cr0, load_tr, farjmp, farcall
-EXTERN cons_putchar
-GLOBAL asm_cons_putchar
+EXTERN os_api 
+GLOBAL asm_os_api
 
 io_cli:  ; void io_cli(void)
 	CLI
@@ -170,12 +170,11 @@ farcall:  ; void farcall(int eip, int cs)
 	CALL FAR [ESP+4]
 	RET
 
-asm_cons_putchar:
+asm_os_api:
 	STI
-	PUSH 1
-	AND EAX, 0xff ;将AH和EAX的高位置0，将EAX置为一存入字符编码的状态
-	PUSH EAX
-	PUSH DWORD [0xfec]
-	CALL cons_putchar
-	ADD ESP, 12
+	PUSHAD
+	PUSHAD
+	CALL os_api
+	ADD ESP, 32
+	POPAD
 	IRETD

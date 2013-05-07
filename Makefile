@@ -28,8 +28,8 @@ bootpack.elf: bootpack.o nasmfunc.o $(MIDOBJ) libc.a
 bootpack.sys: bootpack.elf
 	$(OBJCOPY) -Obinary bootpack.elf bootpack.sys
 
-hlt.bin: hlt.asm
-	$(NASM) hlt.asm -o hlt.bin
+abcd.bin: abcd.asm
+	$(NASM) abcd.asm -o abcd.bin
 
 asmhead.sys: asmhead.asm 
 	$(NASM) asmhead.asm -o asmhead.sys
@@ -39,7 +39,7 @@ asmhead.sys: asmhead.asm
 #asmhead.sys: bootpack.sys asmhead.mid
 #	$(CAT) asmhead.mid bootpack.sys > asmhead.sys
 
-fwos: ipl.bin asmhead.sys bootpack.sys hlt.bin
+fwos: ipl.bin asmhead.sys bootpack.sys abcd.bin
 	$(DEL) -f fwos.img
 	$(DD) if=ipl.bin of=fwos.img bs=512 
 	#$(DD) if=asmhead.sys of=fwos.img bs=512 seek=33
@@ -47,11 +47,11 @@ fwos: ipl.bin asmhead.sys bootpack.sys hlt.bin
 	sudo $(MOUNT) -o loop fwos.img floopy/
 	sudo $(CP) asmhead.sys floopy/
 	sudo $(CP) test.txt floopy/
-	sudo $(CP) hlt.bin floopy/
+	sudo $(CP) abcd.bin floopy/
 	sleep 2
 	sudo umount floopy/
 	$(DD) if=bootpack.sys of=fwos.img bs=512 seek=38
 	$(DD) if=/dev/zero of=fwos.img bs=512 seek=2880 count=0
 
 clean:
-	$(DEL) ipl.bin asmhead.sys bootpack.o bootpack.elf bootpack.sys nasmfunc.o $(MIDOBJ) fwos.img hlt.bin
+	$(DEL) ipl.bin asmhead.sys bootpack.o bootpack.elf bootpack.sys nasmfunc.o $(MIDOBJ) fwos.img abcd.bin
