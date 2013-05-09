@@ -315,12 +315,18 @@ int cmd_app(struct CONSOLE *cons, int *fat, char *cmdline)
 	}
 	if (finfo != 0)
 	{
-		p = (char *) memman_alloc_4k(memman, finfo->size);
+		p = (char *) memman_alloc_4k(memman, finfo->size+0x10);
 		*((int *) 0xfe8) = (int) p;
-		file_loadfile(finfo->clustno, finfo->size, p, fat, (char *) (ADR_DISKIMG + 0x003e00));
-		set_segmdesc(gdt + 1003, finfo->size - 1, (int) p, AR_CODE32_ER);
+		file_loadfile(finfo->clustno, finfo->size, p+0x10, fat, (char *) (ADR_DISKIMG + 0x003e00));
+		set_segmdesc(gdt + 1003, finfo->size - 1 + 0x10, (int) p, AR_CODE32_ER);
+		p[0] = 0xe8;
+		p[1] = 0x0b;
+		p[2] = 0x00;
+		p[3] = 0x00;
+		p[4] = 0x00;
+		p[5] = 0xcb;
 		farcall(0, 1003 * 8);
-		memman_free_4k(memman, (int) p, finfo->size);
+		memman_free_4k(memman, (int) p, finfo->size+0x10);
 		cons_newline(cons);
 		return 1;
 	}
