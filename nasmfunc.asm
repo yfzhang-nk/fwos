@@ -7,11 +7,11 @@ GLOBAL io_in8, io_in16, io_in32
 GLOBAL io_out8, io_out16, io_out32
 GLOBAL io_load_eflags, io_store_eflags
 GLOBAL load_gdtr, load_idtr
-GLOBAL asm_inthandler20, asm_inthandler21, asm_inthandler27, asm_inthandler2c
-EXTERN inthandler20, inthandler21, inthandler27, inthandler2c
+GLOBAL asm_inthandler20, asm_inthandler21, asm_inthandler27, asm_inthandler2c, asm_inthandler0d
+EXTERN inthandler20, inthandler21, inthandler27, inthandler2c, inthandler0d
 GLOBAL load_cr0, store_cr0, load_tr, farjmp, farcall
 EXTERN os_api 
-GLOBAL asm_os_api
+GLOBAL asm_os_api, start_app
 
 io_cli:  ; void io_cli(void)
 	CLI
@@ -149,6 +149,26 @@ asm_inthandler2c:
 	POP ES
 	IRETD
 
+asm_inthandler0d:
+		STI
+		PUSH ES
+		PUSH DS
+		PUSHAD
+		MOV	EAX,ESP
+		PUSH EAX
+		MOV	AX,SS
+		MOV	DS,AX
+		MOV	ES,AX
+		CALL inthandler0d
+		CMP	EAX,0
+		JNE	end_app
+		POP	EAX
+		POPAD
+		POP	DS
+		POP	ES
+		ADD	ESP,4
+		IRETD
+
 load_cr0:  ; int load_cr0(void)
 	MOV EAX, CR0
 	RET
@@ -172,9 +192,43 @@ farcall:  ; void farcall(int eip, int cs)
 
 asm_os_api:
 	STI
+	PUSH DS
+	PUSH ES
 	PUSHAD
 	PUSHAD
+	MOV	AX,SS
+	MOV	DS,AX
+	MOV	ES,AX
 	CALL os_api
-	ADD ESP, 32
+	CMP	EAX,0
+	JNE	end_app
+	ADD	ESP,32
 	POPAD
+	POP	ES
+	POP	DS
 	IRETD
+end_app:
+	MOV	ESP,[EAX]
+	POPAD
+	RET
+
+start_app:	
+	PUSHAD	
+	MOV		EAX,[ESP+36]
+	MOV		ECX,[ESP+40]
+	MOV		EDX,[ESP+44]
+	MOV		EBX,[ESP+48]
+	MOV		EBP,[ESP+52]
+	MOV		[EBP],ESP
+	MOV		[EBP+4],SS
+	MOV		ES,BX
+	MOV		DS,BX
+	MOV		FS,BX
+	MOV		GS,BX
+	OR		ECX,3
+	OR		EBX,3
+	PUSH	EBX	
+	PUSH	EDX
+	PUSH	ECX
+	PUSH	EAX
+	RETF

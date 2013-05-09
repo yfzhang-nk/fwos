@@ -28,33 +28,27 @@ bootpack.elf: bootpack.o nasmfunc.o $(MIDOBJ) libc.a
 bootpack.sys: bootpack.elf
 	$(OBJCOPY) -Obinary bootpack.elf bootpack.sys
 
-APPOBJ = abcd.bin a.o a_nasm.o a.elf a.bin
-abcd.bin: abcd.asm
-	$(NASM) abcd.asm -o abcd.bin
+APPOBJ = a.o a_nasm.o a.elf a.bin crack.bin
 a_nasm.o: a_nasm.asm
 	$(NASM) -felf -o a_nasm.o a_nasm.asm
 a.elf: a.o a_nasm.o
 	$(LD) -T a.lds -melf_i386 -o a.elf a.o a_nasm.o
 a.bin: a.elf
 	$(OBJCOPY) -Obinary a.elf a.bin
+crack.bin: crack.asm
+	$(NASM) -o crack.bin crack.asm
 
 asmhead.sys: asmhead.asm 
 	$(NASM) asmhead.asm -o asmhead.sys
-#asmhead.mid: asmhead.asm 
-#	$(NASM) asmhead.asm -o asmhead.mid
 
-#asmhead.sys: bootpack.sys asmhead.mid
-#	$(CAT) asmhead.mid bootpack.sys > asmhead.sys
-
-fwos: ipl.bin asmhead.sys bootpack.sys abcd.bin a.bin
+fwos: ipl.bin asmhead.sys bootpack.sys a.bin crack.bin
 	$(DEL) -f fwos.img
 	$(DD) if=ipl.bin of=fwos.img bs=512 
-	#$(DD) if=asmhead.sys of=fwos.img bs=512 seek=33
 	$(DD) if=/dev/zero of=fwos.img bs=512 seek=2880 count=0
 	sudo $(MOUNT) -o loop fwos.img floopy/
 	sudo $(CP) asmhead.sys floopy/
 	sudo $(CP) a.bin floopy/
-	sudo $(CP) abcd.bin floopy/
+	sudo $(CP) crack.bin floopy/
 	sleep 2
 	sudo umount floopy/
 	$(DD) if=bootpack.sys of=fwos.img bs=512 seek=38

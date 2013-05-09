@@ -293,8 +293,10 @@ int cmd_app(struct CONSOLE *cons, int *fat, char *cmdline)
 	struct MEMMAN *memman = (struct MEMMAN *) MEMMAN_ADDR;
 	struct FILEINFO *finfo;
 	struct SEGMENT_DESCRIPTOR *gdt = (struct  SEGMENT_DESCRIPTOR *) ADR_GDT;
-	char *p, name[18];
+	char *p, name[18], *q;
+	struct TASK *task = task_now();
 	int i;
+	int offset = 0x00;
 
 	for (i = 0; i < 13; ++i)
 	{
@@ -315,27 +317,31 @@ int cmd_app(struct CONSOLE *cons, int *fat, char *cmdline)
 	}
 	if (finfo != 0)
 	{
-		p = (char *) memman_alloc_4k(memman, finfo->size+0x10);
+		p = (char *) memman_alloc_4k(memman, finfo->size+offset);
+		q = (char *) memman_alloc_4k(memman, 64 * 1024);
 		*((int *) 0xfe8) = (int) p;
-		file_loadfile(finfo->clustno, finfo->size, p+0x10, fat, (char *) (ADR_DISKIMG + 0x003e00));
-		set_segmdesc(gdt + 1003, finfo->size - 1 + 0x10, (int) p, AR_CODE32_ER);
-		p[0] = 0xe8;
-		p[1] = 0x0b;
-		p[2] = 0x00;
-		p[3] = 0x00;
-		p[4] = 0x00;
-		p[5] = 0xcb;
-		farcall(0, 1003 * 8);
-		memman_free_4k(memman, (int) p, finfo->size+0x10);
+		file_loadfile(finfo->clustno, finfo->size, p+offset, fat, (char *) (ADR_DISKIMG + 0x003e00));
+		set_segmdesc(gdt + 1003, finfo->size - 1 + offset, (int) p, AR_CODE32_ER + 0x60);
+		set_segmdesc(gdt + 1004, 64 * 1024 - 1, (int) q, AR_DATA32_RW + 0x60);
+		//p[0] = 0xe8;
+		//p[1] = 0x0b;
+		//p[2] = 0x00;
+		//p[3] = 0x00;
+		//p[4] = 0x00;
+		//p[5] = 0xcb;
+		start_app(0, 1003 * 8, 64 * 1024, 1004 * 8, &(task->tss.esp0));
+		memman_free_4k(memman, (unsigned int) p, finfo->size+offset);
+		memman_free_4k(memman, (unsigned int) q, 64 * 1024);
 		cons_newline(cons);
 		return 1;
 	}
 	return 0;
 }
 
-void os_api(int edi, int esi, int ebp, int esp, int ebx, int edx, int ecx, int eax)
+int *os_api(int edi, int esi, int ebp, int esp, int ebx, int edx, int ecx, int eax)
 {
 	int cs_base = *((int *) 0xfe8);
+	struct TASK *task = task_now();
 	struct CONSOLE *cons = (struct CONSOLE *) *((int *) 0x0fec);
 	if (edx == 1)
 	{
@@ -349,5 +355,17 @@ void os_api(int edi, int esi, int ebp, int esp, int ebx, int edx, int ecx, int e
 	{
 		cons_putstr1(cons, (char *) ebx + cs_base, ecx);
 	}
-	return;
+	else if (edx == 4) 
+	{
+		return &(task->tss.esp0);
+	}
+	return 0;
+}
+
+int *inthandler0d(int *esp)
+{
+	struct CONSOLE *cons = (struct CONSOLE *) *((int *) 0x0fec);
+	struct TASK *task = task_now();
+	cons_putstr0(cons, "\nINT 0D :\n General Protected Exception.\n");
+	return &(task->tss.esp0);
 }

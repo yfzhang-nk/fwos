@@ -146,7 +146,7 @@ int memman_free(struct MEMMAN *man, unsigned int addr, unsigned int size)
 	}
 	if (man->frees < MEMMAN_FREES)
 	{
-		for (j=man->frees; j>i; ++j)
+		for (j=man->frees; j>i; --j)
 		{
 			man->free[j] = man->free[j-1];
 		}
