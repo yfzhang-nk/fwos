@@ -31,6 +31,7 @@ void main(void)
 		'2', '3', '0', '.'
 	};
 	struct TASK *task_a, *task_cons;
+	struct CONSOLE *cons;
 	mx = (binfo->scrnx - 16) / 2; 
 	my = (binfo->scrny - 28 - 16) / 2;
 	init_gdtidt();
@@ -232,6 +233,15 @@ void main(void)
 				{
 					wait_KBC_sendready();
 					io_out8(PORT_KEYDAT, keycmd_wait);
+				}
+				if (i == 256 + 0x2e && key_shift != 0 && task_cons->tss.ss0 != 0)
+				{
+					cons = (struct CONSOLE *) *((int *)0x0fec);
+					cons_putstr0(cons, "\nBreak(key)\n");
+					io_cli();
+					task_cons->tss.eax = (int) &(task_cons->tss.esp0);
+					task_cons->tss.eip = (int) end_app;
+					io_sti();
 				}
 				//重新显示光标
 				if (cursor_c >= 0)

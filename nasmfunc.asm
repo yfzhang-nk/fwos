@@ -11,7 +11,7 @@ GLOBAL asm_inthandler20, asm_inthandler21, asm_inthandler27, asm_inthandler2c, a
 EXTERN inthandler20, inthandler21, inthandler27, inthandler2c, inthandler0d, inthandler0c
 GLOBAL load_cr0, store_cr0, load_tr, farjmp, farcall
 EXTERN os_api 
-GLOBAL asm_os_api, start_app
+GLOBAL asm_os_api, start_app, end_app
 
 io_cli:  ; void io_cli(void)
 	CLI
