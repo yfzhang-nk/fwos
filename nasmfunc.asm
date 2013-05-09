@@ -7,8 +7,8 @@ GLOBAL io_in8, io_in16, io_in32
 GLOBAL io_out8, io_out16, io_out32
 GLOBAL io_load_eflags, io_store_eflags
 GLOBAL load_gdtr, load_idtr
-GLOBAL asm_inthandler20, asm_inthandler21, asm_inthandler27, asm_inthandler2c, asm_inthandler0d
-EXTERN inthandler20, inthandler21, inthandler27, inthandler2c, inthandler0d
+GLOBAL asm_inthandler20, asm_inthandler21, asm_inthandler27, asm_inthandler2c, asm_inthandler0d, asm_inthandler0c
+EXTERN inthandler20, inthandler21, inthandler27, inthandler2c, inthandler0d, inthandler0c
 GLOBAL load_cr0, store_cr0, load_tr, farjmp, farcall
 EXTERN os_api 
 GLOBAL asm_os_api, start_app
@@ -150,24 +150,44 @@ asm_inthandler2c:
 	IRETD
 
 asm_inthandler0d:
-		STI
-		PUSH ES
-		PUSH DS
-		PUSHAD
-		MOV	EAX,ESP
-		PUSH EAX
-		MOV	AX,SS
-		MOV	DS,AX
-		MOV	ES,AX
-		CALL inthandler0d
-		CMP	EAX,0
-		JNE	end_app
-		POP	EAX
-		POPAD
-		POP	DS
-		POP	ES
-		ADD	ESP,4
-		IRETD
+	STI
+	PUSH ES
+	PUSH DS
+	PUSHAD
+	MOV	EAX,ESP
+	PUSH EAX
+	MOV	AX,SS
+	MOV	DS,AX
+	MOV	ES,AX
+	CALL inthandler0d
+	CMP	EAX,0
+	JNE	end_app
+	POP	EAX
+	POPAD
+	POP	DS
+	POP	ES
+	ADD	ESP,4
+	IRETD
+
+asm_inthandler0c:
+	STI
+	PUSH ES
+	PUSH DS
+	PUSHAD
+	MOV	EAX,ESP
+	PUSH EAX
+	MOV	AX,SS
+	MOV	DS,AX
+	MOV	ES,AX
+	CALL inthandler0c
+	CMP	EAX,0
+	JNE	end_app
+	POP	EAX
+	POPAD
+	POP	DS
+	POP	ES
+	ADD	ESP,4
+	IRETD
 
 load_cr0:  ; int load_cr0(void)
 	MOV EAX, CR0

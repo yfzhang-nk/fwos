@@ -3,6 +3,8 @@ void api_end(void);
 
 void main(void)
 {
-	*((char *) 0x102600) = 0;
+	char a[100];
+	a[124] = 'B';
+	api_putchar(a[124]);
 	api_end();
 }

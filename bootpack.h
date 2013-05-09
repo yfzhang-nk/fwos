@@ -279,6 +279,6 @@ int cmd_app(struct CONSOLE *cons, int *fat, char *cmdline);
 void cons_newline(struct CONSOLE *cons);
 void console_task(struct SHEET *sht_cons, unsigned int memtotal);
 int *os_api(int edi, int esi, int ebp, int esp, int ebx, int edx, int ecx, int eax);
-int *inthandler0d(int *esp);
 void asm_inthandler0d(void);
+void asm_inthandler0c(void);
 void start_app(int eip, int cs, int esp, int ds, int *tss_esp0);
