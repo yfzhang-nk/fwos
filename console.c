@@ -333,24 +333,67 @@ int cmd_app(struct CONSOLE *cons, int *fat, char *cmdline)
 
 int *os_api(int edi, int esi, int ebp, int esp, int ebx, int edx, int ecx, int eax)
 {
-	int cs_base = *((int *) 0xfe8);
+	int ds_base = *((int *) 0xfe8);
 	struct TASK *task = task_now();
 	struct CONSOLE *cons = (struct CONSOLE *) *((int *) 0x0fec);
+	struct SHTCTL *shtctl = (struct SHTCTL *) *((int *) 0x0fe4);
+	struct SHEET *sht;
+	int *reg = &eax + 1;
+	char s[50];
 	if (edx == 1)
 	{
 		cons_putchar(cons, eax & 0xff, 1);
 	}
 	else if (edx == 2)
 	{
-		cons_putstr0(cons, (char *) ebx + cs_base);
+		cons_putstr0(cons, (char *) ebx + ds_base);
 	}
 	else if (edx == 3)
 	{
-		cons_putstr1(cons, (char *) ebx + cs_base, ecx);
+		cons_putstr1(cons, (char *) ebx + ds_base, ecx);
 	}
 	else if (edx == 4) 
 	{
 		return &(task->tss.esp0);
+	}
+	else if (edx == 5)
+	{
+		// EBX = 窗口缓冲区
+		// ESI = 窗口宽度
+		// EDI = 窗口高度
+		// EAX = 透明色
+		// ECX = 窗口名称
+		// 返回值 EAX用于操作窗口的句柄
+		sht = sheet_alloc(shtctl);
+		sheet_setbuf(sht, (char *) ebx+ds_base, esi, edi, eax);
+		make_window8((char *) ebx+ds_base, esi, edi, (char *) (ecx+ds_base), 0);
+		sheet_slide(sht, 100, 50);
+		sheet_updown(sht, 3);
+		reg[7] = (int) sht;
+	}
+	else if (edx == 6)
+	{
+		// EBX = 窗口句柄
+		// ESI = 显示位置的x坐标
+		// EDI = 显示位置的y坐标
+		// EAX = 色号
+		// ECX = 字符串长度
+		// EBP = 字符串
+		sht = (struct SHEET *) ebx;
+		putfont8_asc(sht->buf, sht->bxsize, esi, edi, eax, (char *) ebp + ds_base);
+		sheet_refresh(sht, esi, edi, esi+ecx*8, edi+16);
+	}
+	else if (edx == 7)
+	{
+		// EBX = 窗口句柄
+		// EAX = x0
+		// ECX = y0
+		// ESI = x1
+		// EDI = y1
+		// EBP = 色号
+		sht = (struct SHEET *) ebx;
+		boxfill8(sht->buf, sht->bxsize, ebp, eax, ecx, esi, edi);
+		sheet_refresh(sht, eax, ecx, esi+1, edi+1);
 	}
 	return 0;
 }

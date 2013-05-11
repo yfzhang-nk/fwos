@@ -120,8 +120,8 @@ pipelineflush:
 	MOV	GS, AX
 	MOV SS, AX
 
-	MOV ESI, 0xcc00
-	MOV	EDI, BOTPAK + 0xcc00 
+	MOV ESI, 0xc600
+	MOV	EDI, BOTPAK + 0xc600 
 	MOV ECX, 512*1024/4
 	CALL memcpy
 
@@ -150,7 +150,7 @@ pipelineflush:
 
 skip:
 	MOV ESP, 0x00310000 ;栈的起始地址
-	JMP DWORD 2*8:0xcc00
+	JMP DWORD 2*8:0xc600
 
 waitkbdout:
 	IN	AL, 0x64

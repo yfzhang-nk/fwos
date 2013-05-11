@@ -47,12 +47,13 @@ fwos: ipl.bin asmhead.sys bootpack.sys a.bin crack.bin
 	$(DD) if=/dev/zero of=fwos.img bs=512 seek=2880 count=0
 	sudo $(MOUNT) -o loop fwos.img floopy/
 	sudo $(CP) asmhead.sys floopy/
+	sudo $(CP) bootpack.sys floopy/
 	sudo $(CP) a.bin floopy/
 	sudo $(CP) crack.bin floopy/
 	sleep 2
 	sudo umount floopy/
-	$(DD) if=bootpack.sys of=fwos.img bs=512 seek=38
-	$(DD) if=/dev/zero of=fwos.img bs=512 seek=2880 count=0
+	#$(DD) if=bootpack.sys of=fwos.img bs=512 seek=38
+	#$(DD) if=/dev/zero of=fwos.img bs=512 seek=2880 count=0
 
 clean:
 	$(DEL) ipl.bin asmhead.sys bootpack.o bootpack.elf bootpack.sys nasmfunc.o $(MIDOBJ) fwos.img $(APPOBJ)

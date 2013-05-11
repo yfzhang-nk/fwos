@@ -74,6 +74,7 @@ void main(void)
 	task_a = task_init(memman);
 	fifo.task = task_a;
 	task_run(task_a, 1, 2);
+	*((int *) 0x0fe4) = (int) shtctl;
 
 	sht_cons = sheet_alloc(shtctl);
 	buf_cons = (unsigned char *) memman_alloc_4k(memman, 256*165);
